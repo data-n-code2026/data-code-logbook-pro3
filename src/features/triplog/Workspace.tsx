@@ -76,14 +76,14 @@ function WorkspaceView({page,data}:{page:Page;data:Data}){
    async function delLog(id:string){if(!window.confirm(t.del+'?'))return;const {error}=await supabase.rpc('delete_log',{p_id:id});if(error)toast.error(t.changeFail);else{refresh();toast.success(t.deleted);}}
  const editLog=(l:Data['logs'][number])=>{if(!requireLogin())return;if(l.kind==='fuel'?!canFuel:!canTrip)return;setEntry(l.kind as 'trip'|'fuel');setEditLogId(l.id);setDate(l.entry_date);setTime(l.entry_time.slice(0,5));setVehicle(l.vehicle_id);setSupervisor(l.supervisor_id);setDriver(l.driver_id);setQuantity(String(l.quantity));setRoute(l.route_id??'');setNightHold(l.night_hold);setDir((l.direction as 'up'|'down')??'up');};
  const openNewStaff=()=>{setStaffEditId(null);setStaffName('');setStaffCode('');setStaffPin('');setStaffAccess('trip_operator');setStaffCounter('');setStaffOpen(true);};
- const editMaster=(m:Data['master'][number])=>{setMasterEditId(m.id);setMasterKind(m.kind);setMasterName(m.name);setMasterDir(m.direction??'up');setMasterDist(m.distance!=null?String(m.distance):'');setMasterOpen(true);};
+ const editMaster=(m:Data['master'][number])=>{setMasterEditId(m.id);setMasterKind(m.kind);setMasterName(m.name);setMasterDir(m.direction??'up');setMasterDist(m.distance!=null?String(m.distance):'');setMasterSerial(m.serial!=null?String(m.serial):'');setMasterOpen(true);};
  async function delMaster(id:string){if(!window.confirm(t.del+'?'))return;const {error}=await supabase.from('master_data').delete().eq('id',id);if(error)toast.error(t.delFail);else{refresh();toast.success(t.deleted);}}
  const rangeText=month?month:`${fmtDate(start,lang)} — ${fmtDate(end,lang)}`;
  const allPairs=pairTrips(data.logs.filter(l=>l.kind==='trip'));
  const pendingReturns=allPairs.filter(p=>p.up&&!p.down).map(p=>p.up!);
  const readyFuel=allPairs.filter(p=>p.up&&p.down&&fuelFor(p.up).length===0);
  const giveReturn=(u:Data['logs'][number])=>{if(!requireLogin())return;setEntry('trip');setDate(today());setTime(nowTime());setVehicle(u.vehicle_id);setSupervisor(u.supervisor_id);setDriver(u.driver_id);setQuantity('');setRoute('');setNightHold(u.night_hold);setDir('down');};
- const giveFuel=(u:Data['logs'][number])=>{if(!requireLogin())return;setEntry('fuel');setDate(u.entry_date);setTime(nowTime());setVehicle(u.vehicle_id);setSupervisor(u.supervisor_id);setDriver(u.driver_id);setQuantity('');setRoute('');setNightHold(false);};
+ const giveFuel=(u:Data['logs'][number])=>{if(!requireLogin())return;setEntry('fuel');setDate(u.entry_date);setTime(nowTime());setVehicle(u.vehicle_id);setSupervisor(u.supervisor_id);setDriver(u.driver_id);setQuantity('');setRoute(u.route_id??'');setNightHold(false);};
  const bnx=lang==='bn';
 
  return <div className="app-layout">
