@@ -37,16 +37,18 @@ function WorkspaceView({page,data}:{page:Page;data:Data}){
  const [mobile,setMobile]=useState(false),[login,setLogin]=useState(false),[signup,setSignup]=useState(false),[needsConfirmation,setNeedsConfirmation]=useState(false),[identity,setIdentity]=useState(''),[password,setPassword]=useState(''),[busy,setBusy]=useState(false);
  const [start,setStart]=useState(''),[end,setEnd]=useState(''),[month,setMonth]=useState(''),[search,setSearch]=useState(''),[clock,setClock]=useState('—'),[tab,setTab]=useState<'supervisor'|'driver'>('supervisor');
  const [entry,setEntry]=useState<'trip'|'fuel'|null>(null),[date,setDate]=useState(''),[time,setTime]=useState(''),[vehicle,setVehicle]=useState(''),[supervisor,setSupervisor]=useState(''),[driver,setDriver]=useState(''),[quantity,setQuantity]=useState(''),[confirm,setConfirm]=useState(false),[duplicateOrdinal,setDuplicateOrdinal]=useState(2);
- const [masterOpen,setMasterOpen]=useState(false),[masterKind,setMasterKind]=useState('vehicle'),[masterName,setMasterName]=useState(''),[masterEditId,setMasterEditId]=useState<string|null>(null),[staffOpen,setStaffOpen]=useState(false),[staffName,setStaffName]=useState(''),[staffCode,setStaffCode]=useState(''),[staffPin,setStaffPin]=useState(''),[allowance,setAllowance]=useState(''),[price,setPrice]=useState('');
+ const [masterOpen,setMasterOpen]=useState(false),[masterKind,setMasterKind]=useState('vehicle'),[masterName,setMasterName]=useState(''),[masterEditId,setMasterEditId]=useState<string|null>(null),[staffOpen,setStaffOpen]=useState(false),[staffName,setStaffName]=useState(''),[staffCode,setStaffCode]=useState(''),[staffPin,setStaffPin]=useState(''),[allowance,setAllowance]=useState(''),[price,setPrice]=useState(''),[mileage,setMileage]=useState(''),[masterSerial,setMasterSerial]=useState('');
  const [editLogId,setEditLogId]=useState<string|null>(null),[staffEditId,setStaffEditId]=useState<string|null>(null);
  const [printedAt,setPrintedAt]=useState('');const [route,setRoute]=useState(''),[nightHold,setNightHold]=useState(false),[dir,setDir]=useState<'up'|'down'>('up'),[masterDir,setMasterDir]=useState('up'),[masterDist,setMasterDist]=useState(''),[staffAccess,setStaffAccess]=useState<'trip_operator'|'fuel_manager'>('trip_operator'),[staffCounter,setStaffCounter]=useState('');
  const report=useRef<HTMLDivElement>(null);
  useEffect(()=>{setStart(today().slice(0,8)+'01');setEnd(today());setDate(today());setTime(nowTime());const update=()=>setClock(new Date().toLocaleTimeString('en-GB',{timeZone:'Asia/Dhaka'}));update();const iv=setInterval(update,1000);return ()=>clearInterval(iv);},[]);
- useEffect(()=>{setAllowance(String(data.settings?.allowance??''));setPrice(String(data.settings?.unit_price??''));},[data.settings]);
+ useEffect(()=>{setAllowance(String(data.settings?.allowance??''));setPrice(String(data.settings?.unit_price??''));setMileage(String(data.settings?.mileage??''));},[data.settings]);
  const n=(v:number)=>num(v,lang);
  const canTrip=data.access==='admin'||data.access==='trip_operator',canFuel=data.access==='admin'||data.access==='fuel_manager';
  const counterDir=data.me?.counter_id?data.master.find(m=>m.id===data.me?.counter_id)?.direction??null:null;
  const md=(id:string|null)=>data.master.find(x=>x.id===id);
+ const mileageV=data.settings?.mileage??0;
+ const bySerial=(ms:Data['master'])=>[...ms].sort((a,b)=>(a.serial??99999)-(b.serial??99999)||a.name.localeCompare(b.name));
  const dirLabel=(d:string|null)=>d==='up'?t.up:d==='down'?t.down:'—';
  const name=(id:string)=>data.master.find(x=>x.id===id)?.name??'—';
  const filtered=data.logs.filter(l=>(!start||l.entry_date>=start)&&(!end||l.entry_date<=end)&&(!month||l.entry_date.startsWith(month))&&(!search||[name(l.vehicle_id),name(l.supervisor_id),name(l.driver_id)].some(s=>s.toLowerCase().includes(search.toLowerCase()))));
@@ -62,7 +64,7 @@ function WorkspaceView({page,data}:{page:Page;data:Data}){
  function printReport(){stamp();setTimeout(()=>window.print(),50);}
  const currentTitle=t[page];
  const totalFuel=fuels.reduce((s,l)=>s+l.quantity,0),totalCost=fuels.reduce((s,l)=>s+(l.total??0),0),totalExcess=fuels.reduce((s,l)=>s+(l.excess??0),0);
- const subtitles={dashboard:t.dashSub,trips:t.tripsSub,fuel:t.fuelSub,database:t.dbSub,report:t.reportSub,users:t.usersSub};
+ const subtitles={dashboard:t.dashSub,trips:t.tripsSub,fuel:t.fuelSub,database:t.dbSub,report:t.reportSub,users:t.usersSub,roundtrip:t.rtSub};
  const kindLabel=(k:string)=>k==='vehicle'?t.vehicleNo:k==='supervisor'?t.supervisors:k==='route'?t.routes:k==='counter'?t.counters:t.drivers;
  const fuelFor=(l:{vehicle_id:string;entry_date:string})=>data.logs.filter(f=>f.kind==='fuel'&&f.vehicle_id===l.vehicle_id&&f.entry_date===l.entry_date);
  const reportRows=pairTrips(trips).map(p=>{const a=(p.up??p.down)!;const ru=md(p.up?.route_id??null),rd=md(p.down?.route_id??null);const routeName=ru&&rd?joinRoute(ru.name,rd.name):(ru??rd)?.name??'—';const dist=(ru?.distance??0)+(rd?.distance??0);const f=fuelFor(a);return {key:(p.up?.id??'')+(p.down?.id??''),a,p,routeName,dist,qty:f.reduce((x,y)=>x+y.quantity,0),taka:f.reduce((x,y)=>x+(y.total??0),0),matchDate:p.down?.entry_date??a.entry_date,timeLabel:p.up&&p.down?`${p.up.entry_time.slice(0,5)} → ${p.down.entry_time.slice(0,5)}`:a.entry_time.slice(0,5)};});
